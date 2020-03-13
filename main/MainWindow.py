@@ -66,9 +66,8 @@ class SyslogUDPHandler(socketserver.BaseRequestHandler):
         match = re.search(r"^<\d+>", data)
         prio = int(match.group(0)[1:-1])
 
-        socket = self.request[1]
-        f = socket.fileno()
-        level = self.levels[prio ^ (f << 3)]
+        f = prio // 8
+        level = self.levels[prio % 8]
 
         global TABLE
         row = TABLE.rowCount()
@@ -113,17 +112,32 @@ class MainWindow(QtWidgets.QMainWindow):
     def change(self):
         self.end()
 
-        dialog = ServerDialog()
-        dialog.exec_()
-        self.host.setText(dialog.host.text())
-        self.port.setValue(dialog.port.value())
+        def accept():
+            self.host.setText(dialog.host.text())
+            self.port.setValue(dialog.port.value())
+            self.start()
 
-        self.start()
+        def reject():
+            self.deleteLater()
+
+        dialog = ServerDialog(self)
+        dialog.accepted.connect(accept)
+        dialog.rejected.connect(reject)
+        dialog.exec_()
 
     def start(self):
-        # TODO: catch "address already in use"
-        self.server = socketserver.UDPServer((self.host.text(), self.port.value()), SyslogUDPHandler)
-        self.thread.start()
+        try:
+            self.server = socketserver.UDPServer((self.host.text(), self.port.value()), SyslogUDPHandler)
+            self.thread.start()
+            return
+        except PermissionError as e:
+            QtWidgets.QMessageBox.warning(self, str(e), "You don't have permission to listen on this port.\n"
+                                                        "The ports below 1024 require root access.")
+        except OSError as e:
+            QtWidgets.QMessageBox.warning(self, str(e), "The address '%s:%i' is already in use." %
+                                          (self.host.text(), self.port.value()))
+
+        self.change()
 
     def run(self):
         # print("STARTED")

@@ -1,0 +1,1 @@
+pyinstaller -n PySysLogQt --onefile --windowed __main__.py
