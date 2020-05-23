@@ -31,6 +31,9 @@ if __name__ == "__main__":
 	try:
 		server = socketserver.UDPServer((HOST,PORT), SyslogUDPHandler)
 		server.serve_forever(poll_interval=0.5)
+		print("here")
+		logger = logging.getLogger('PyPDEVS-logging')
+		logger.warning("test")
 	except (IOError, SystemExit):
 		raise
 	except KeyboardInterrupt:

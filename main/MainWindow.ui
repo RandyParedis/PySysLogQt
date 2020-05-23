@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>986</width>
+    <height>706</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -65,6 +65,9 @@
       <property name="dragDropOverwriteMode">
        <bool>false</bool>
       </property>
+      <property name="alternatingRowColors">
+       <bool>true</bool>
+      </property>
       <property name="selectionBehavior">
        <enum>QAbstractItemView::SelectRows</enum>
       </property>
@@ -82,12 +85,27 @@
       </attribute>
       <column>
        <property name="text">
+        <string>ID</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
         <string>DATE</string>
        </property>
       </column>
       <column>
        <property name="text">
         <string>TIME</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>HOST</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>APPLICATION</string>
        </property>
       </column>
       <column>
@@ -149,7 +167,232 @@
     </item>
    </layout>
   </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>986</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="action_Open"/>
+    <addaction name="action_Save"/>
+    <addaction name="action_Clear"/>
+    <addaction name="action_Change"/>
+    <addaction name="separator"/>
+    <addaction name="action_Quit"/>
+   </widget>
+   <widget class="QMenu" name="menu_Test">
+    <property name="title">
+     <string>&amp;Test</string>
+    </property>
+    <addaction name="action_Emergency"/>
+    <addaction name="action_Alert"/>
+    <addaction name="action_Critical"/>
+    <addaction name="action_Error"/>
+    <addaction name="action_Warning"/>
+    <addaction name="action_Notice"/>
+    <addaction name="action_Info"/>
+    <addaction name="action_Debug"/>
+   </widget>
+   <widget class="QMenu" name="menu_View">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+    <addaction name="action_Id"/>
+    <addaction name="action_Date"/>
+    <addaction name="action_Time"/>
+    <addaction name="action_Host"/>
+    <addaction name="action_Application"/>
+    <addaction name="action_Facility"/>
+    <addaction name="action_Level"/>
+    <addaction name="action_Message"/>
+   </widget>
+   <addaction name="menu_File"/>
+   <addaction name="menu_Test"/>
+   <addaction name="menu_View"/>
+  </widget>
+  <action name="action_New">
+   <property name="text">
+    <string>&amp;New...</string>
+   </property>
+  </action>
+  <action name="action_Open">
+   <property name="text">
+    <string>O&amp;pen File...</string>
+   </property>
+  </action>
+  <action name="action_Save">
+   <property name="text">
+    <string>&amp;Save As...</string>
+   </property>
+  </action>
+  <action name="action_Change">
+   <property name="text">
+    <string>C&amp;hange Host...</string>
+   </property>
+  </action>
+  <action name="action_Quit">
+   <property name="text">
+    <string>&amp;Quit</string>
+   </property>
+  </action>
+  <action name="action_Emergency">
+   <property name="text">
+    <string>&amp;Emergency</string>
+   </property>
+  </action>
+  <action name="action_Alert">
+   <property name="text">
+    <string>&amp;Alert</string>
+   </property>
+  </action>
+  <action name="action_Critical">
+   <property name="text">
+    <string>&amp;Critical</string>
+   </property>
+  </action>
+  <action name="action_Error">
+   <property name="text">
+    <string>E&amp;rror</string>
+   </property>
+  </action>
+  <action name="action_Warning">
+   <property name="text">
+    <string>&amp;Warning</string>
+   </property>
+  </action>
+  <action name="action_Notice">
+   <property name="text">
+    <string>&amp;Notice</string>
+   </property>
+  </action>
+  <action name="action_Info">
+   <property name="text">
+    <string>&amp;Info</string>
+   </property>
+  </action>
+  <action name="action_Debug">
+   <property name="text">
+    <string>&amp;Debug</string>
+   </property>
+  </action>
+  <action name="action_Clear">
+   <property name="text">
+    <string>&amp;Clear</string>
+   </property>
+  </action>
+  <action name="action_Id">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Id</string>
+   </property>
+  </action>
+  <action name="action_Date">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Date</string>
+   </property>
+  </action>
+  <action name="action_Time">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Ti&amp;me</string>
+   </property>
+  </action>
+  <action name="action_Host">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Host</string>
+   </property>
+  </action>
+  <action name="action_Application">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Application</string>
+   </property>
+  </action>
+  <action name="action_Facility">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Fa&amp;cility</string>
+   </property>
+  </action>
+  <action name="action_Level">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Level</string>
+   </property>
+  </action>
+  <action name="action_Message">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Message</string>
+   </property>
+  </action>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>pb_change</sender>
+   <signal>clicked()</signal>
+   <receiver>action_Change</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>750</x>
+     <y>43</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

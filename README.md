@@ -1,8 +1,8 @@
 # PySysLogQt
-Simple `syslog` viewer written in `Python 3`.
+Extremely simple `syslog` viewer written in `Python 3`.
 
 **Note: It is nothing too fancy at this point in time. Currently, there are
-no intentions of making this too fancy. Features may be requested in the
+no intentions of making this quite extensive. Features may be requested in the
 _Issues_ page.**
 
 ## Execution
