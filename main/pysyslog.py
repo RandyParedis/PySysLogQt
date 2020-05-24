@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
+# SOURCE: https://gist.github.com/marcelom/4218010
 
 ## Tiny Syslog Server in Python.
 ##
