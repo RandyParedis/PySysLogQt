@@ -33,10 +33,14 @@ GRAMMAR = r'''
     hostname         : NILVALUE
                      | /[!-~]{1,255}/
     msg              : / .*/ms
-    %import common.ESCAPED_STRING   -> ESCAPED_STRING
     _SP: " "
     NILVALUE: "-"
     ZULU: "Z"
+    
+    // Strings from LARK
+    _STRING_INNER: /.*?/
+    _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/ 
+    ESCAPED_STRING : "\"" _STRING_ESC_INNER "\""
 '''
 
 

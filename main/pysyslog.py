@@ -1,42 +1,36 @@
 #!/usr/bin/env python3
 
-# SOURCE: https://gist.github.com/marcelom/4218010
-
-## Tiny Syslog Server in Python.
-##
-## This is a tiny syslog server that is able to receive UDP based syslog
-## entries on a specified port and save them to a file.
-## That's it... it does nothing else...
-## There are a few configuration parameters.
-
-LOG_FILE = 'pysyslog.log'
-HOST, PORT = "localhost", 1024
-
-#
-# NO USER SERVICEABLE PARTS BELOW HERE...
-#
-
-import logging
 import socketserver
-
-logging.basicConfig(level=logging.INFO, format='%(message)s', datefmt='', filename=LOG_FILE, filemode='a')
+from main.MainWindow import FILE_PREFIX
 
 class SyslogUDPHandler(socketserver.BaseRequestHandler):
 
 	def handle(self):
 		data = bytes.decode(self.request[0].strip())
 		socket = self.request[1]
-		print( "%s : " % self.client_address[0], str(data))
-		logging.info(str(data))
+		print("%s:%i : " % self.server.server_address, str(data))
 
-if __name__ == "__main__":
+def setup(host='localhost', port=1024):
+	print("PySysLogQt CLI Server")
+	if host.startswith(FILE_PREFIX):
+		filename = host[len(FILE_PREFIX):]
+		with open(filename) as file:
+			line = 0
+			for data in file:
+				line += 1
+				print("%s:%i : " % (filename, line), str(data), end='')
+		return
 	try:
-		server = socketserver.UDPServer((HOST,PORT), SyslogUDPHandler)
+		server = socketserver.UDPServer((host, port), SyslogUDPHandler)
+		print("Started SysLog Server on '%s:%i'." % (host, port))
 		server.serve_forever(poll_interval=0.5)
-		print("here")
-		logger = logging.getLogger('PyPDEVS-logging')
-		logger.warning("test")
+	except PermissionError as e:
+		print("You have no permission to listen on this port.\n"
+			  "The ports below 1024 require root access.")
 	except (IOError, SystemExit):
 		raise
 	except KeyboardInterrupt:
-		print ("Ctrl+C Pressed. Shutting down.")
+		print("Ctrl+C Pressed. Shutting down...")
+
+if __name__ == "__main__":
+	setup()

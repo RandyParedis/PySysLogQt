@@ -154,14 +154,17 @@
     <item row="1" column="0">
      <widget class="QLabel" name="label_3">
       <property name="text">
-       <string>Search:</string>
+       <string>Filter:</string>
       </property>
      </widget>
     </item>
     <item row="1" column="2" colspan="4">
      <widget class="QLineEdit" name="search">
       <property name="placeholderText">
-       <string>Search...</string>
+       <string notr="true">Filter...</string>
+      </property>
+      <property name="clearButtonEnabled">
+       <bool>true</bool>
       </property>
      </widget>
     </item>
@@ -214,8 +217,8 @@
     <addaction name="action_Message"/>
    </widget>
    <addaction name="menu_File"/>
-   <addaction name="menu_Test"/>
    <addaction name="menu_View"/>
+   <addaction name="menu_Test"/>
   </widget>
   <action name="action_New">
    <property name="text">

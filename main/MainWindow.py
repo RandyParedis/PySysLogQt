@@ -5,54 +5,18 @@ Date:   03/12/2020
 """
 from PyQt5 import QtWidgets, QtCore, QtGui, uic
 import socketserver, datetime, re, os
-import logging.handlers
+from rfc5424logging import Rfc5424SysLogHandler
+import logging
 
 from main.ServerDialog import ServerDialog
 from main.Threading import WorkerThread
+from main.Extra import FACS, RFACS, LEVELS, RLEVELS, resource_path
 
 WINDOW = None
 
 logging.addLevelName(25, "NOTICE")
 logging.addLevelName(60, "ALERT")
 logging.addLevelName(70, "EMERG")
-
-LEVELS = {
-    0: "EMERGENCY",
-    1: "ALERT",
-    2: "CRITICAL",
-    3: "ERROR",
-    4: "WARNING",
-    5: "NOTICE",
-    6: "INFO",
-    7: "DEBUG"
-}
-
-FACS = {
-    0: "Kernel",
-    1: "User-Level",
-    2: "Mail System",
-    3: "System Daemons",
-    4: "Security 1",
-    5: "Internal",
-    6: "Line Printer",
-    7: "Network News",
-    8: "UUCP",
-    9: "Clock Daemon",
-    10: "Security 2",
-    11: "FTP Daemon",
-    12: "NTP",
-    13: "Log Audit",
-    14: "Log Alert",
-    15: "Scheduling",
-    16: "Local 0",
-    17: "Local 1",
-    18: "Local 2",
-    19: "Local 3",
-    20: "Local 4",
-    21: "Local 5",
-    22: "Local 6",
-    23: "Local 7"
-}
 
 COLORS = {
     "EMERGENCY": (255, 130, 130),
@@ -73,25 +37,37 @@ class SyslogUDPHandler(socketserver.BaseRequestHandler):
         WINDOW.add(data)
 
 
-from main.parser import parse
+from main.RFC5424parser import parse as RFCparse
+from main.filterParser import parse as Fparse, check
+
 FILE_PREFIX = 'file://'
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self):
+    def __init__(self, host=None, port=None):
         super(MainWindow, self).__init__(flags=QtCore.Qt.WindowFlags())
-        uic.loadUi("main/MainWindow.ui", self)
+        uic.loadUi(resource_path("vendor", "MainWindow.ui"), self)
         self.messages.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
 
         self.server = None
         self.running = False
         self.contents = []
-        self.search.textChanged.connect(self.searchTable)
+        self.search.textChanged.connect(self.setSearchFilter)
 
         self.logger = logging.getLogger('PySysLogQt-TestLogger')
         self.logger.setLevel(logging.DEBUG)
         self.handler = None
 
+        self.filter = None
+
         self.thread = WorkerThread(self.run)
-        self.change()
+        if host is None or port is None:
+            if host is not None and host.startswith(FILE_PREFIX):
+                self.setAddress(host, 0)
+                self.start()
+            else:
+                self.change(host, port)
+        else:
+            self.setAddress(host, port)
+            self.start()
 
         global WINDOW
         WINDOW = self
@@ -120,25 +96,56 @@ class MainWindow(QtWidgets.QMainWindow):
         self.action_Level.triggered.connect(lambda b: self.messages.setColumnHidden(6, not b))
         self.action_Message.triggered.connect(lambda b: self.messages.setColumnHidden(7, not b))
 
-    def searchTable(self, text):
-        # TODO: fancy search
-        #       - Wildcards
-        #       - Column selectors
-        #       - ...
-        global TABLE
-        for r in range(TABLE.rowCount()):
-            if text != "" and \
-                text.lower() not in " ".join([x.lower() for x in [TABLE.item(r, i).text() for i in range(5)]]):
-                TABLE.hideRow(r)
-            else:
-                TABLE.showRow(r)
+    def setSearchFilter(self, text):
+        if text == "":
+            self.filter = None
+            self.search.setStyleSheet("")
+        else:
+            try:
+                self.filter = Fparse(text)
+                self.search.setStyleSheet("")
+            except:
+                self.search.setStyleSheet("QLineEdit { background: rgb(255, 0, 0); }")
+        self.searchTable()
 
-    def change(self):
+    def searchTable(self):
+        for r in range(self.messages.rowCount()):
+            self.searchRow(r)
+
+    def searchRow(self, r):
+        if self.filter is None:
+            self.messages.showRow(r)
+            return
+
+        fields = {}
+        for c in range(self.messages.columnCount()):
+            head = self.messages.horizontalHeaderItem(c).text()
+            fields[head.lower()] = self.filterCol(head, self.messages.item(r, c).text())
+        if check(self.filter, fields):
+            self.messages.showRow(r)
+        else:
+            self.messages.hideRow(r)
+
+    def filterCol(self, name, value):
+        if name == "ID":
+            return int(value)
+        if name == "DATE":
+            return datetime.datetime.strptime(value, "%Y-%m-%d").timestamp()
+        if name == "TIME":
+            from dateutil.parser import parse
+            return parse('16:15:59.469438+02:00').timestamp()
+        if name in ["HOST", "APPLICATION", "MESSAGE"]:
+            return "'%s'" % value
+        if name == "FACILITY":
+            return RFACS[value]
+        if name == "LEVEL":
+            return RLEVELS[value]
+
+    def change(self, host=None, port=None):
         def accept():
             self.end()
             self.clear()
-            self.host.setText(dialog.host.text())
-            self.port.setValue(dialog.port.value())
+            self.setAddress(dialog.host.text(), dialog.port.value())
             self.start()
 
         def reject():
@@ -146,6 +153,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.deleteLater()
 
         dialog = ServerDialog(self)
+        if host is not None:
+            dialog.host.setText(host)
+        if port is not None:
+            dialog.port.setValue(port)
         dialog.accepted.connect(accept)
         dialog.rejected.connect(reject)
         dialog.exec_()
@@ -157,6 +168,10 @@ class MainWindow(QtWidgets.QMainWindow):
     def getAddress(self):
         return self.host.text(), self.port.value()
 
+    def setAddress(self, host, port):
+        self.host.setText(host)
+        self.port.setValue(port)
+
     def start(self):
         address = self.getAddress()
         if address[0].startswith(FILE_PREFIX):
@@ -165,17 +180,7 @@ class MainWindow(QtWidgets.QMainWindow):
         try:
             address = self.getAddress()
             self.server = socketserver.UDPServer(address, SyslogUDPHandler)
-            self.handler = logging.handlers.SysLogHandler(address, facility=19)
-            self.handler.priority_map = {
-                "DEBUG" : "debug",
-                "INFO" : "info",
-                "NOTICE" : "notice",
-                "WARNING" : "warning",
-                "ERROR" : "error",
-                "CRITICAL" : "critical",
-                "ALERT" : "alert",
-                "EMERG": "emerg"
-            }
+            self.handler = Rfc5424SysLogHandler(address, facility=19)
             self.logger.addHandler(self.handler)
             self.thread.start()
             return
@@ -185,8 +190,6 @@ class MainWindow(QtWidgets.QMainWindow):
         except OSError as e:
             QtWidgets.QMessageBox.warning(self, str(e), "The address '%s:%i' is already in use." %
                                           (self.host.text(), self.port.value()))
-
-        # self.change()
 
     def run(self):
         self.running = True
@@ -206,7 +209,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def add(self, data):
         self.contents.append(data)
         try:
-            message = parse(data)
+            message = RFCparse(data)
             prio = message.header.pri
             timestamp = message.header.timestamp
             date, time = timestamp.split("T")
@@ -238,6 +241,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if i not in [7]:
                 self.messages.item(row, i).setTextAlignment(QtCore.Qt.AlignCenter)
             self.messages.item(row, i).setBackground(QtGui.QColor(*COLORS[level]))
+        self.searchRow(row)
 
     def io(self):
         folder = os.getcwd()
@@ -248,7 +252,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def openFile(self, filename):
         self.end()
         self.clear()
-        self.host.setText("file://" + filename)
+        self.setAddress("file://" + filename, 0)
         with open(filename) as file:
             for data in file:
                 data = data.rstrip()

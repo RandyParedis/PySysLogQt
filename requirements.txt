@@ -1,0 +1,4 @@
+dateutil
+PyQt5==5.13.2
+lark-parser
+rfc5424-logging-handler
